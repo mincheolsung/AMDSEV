@@ -3,9 +3,9 @@
 #
 
 # hypervisor commit
-KERNEL_GIT_URL="https://github.com/AMDESE/linux.git"
-KERNEL_HOST_BRANCH="sev-snp-iommu-avic_5.19-rc6_v3"
-KERNEL_GUEST_BRANCH="sev-snp-iommu-avic_5.19-rc6_v3"
+KERNEL_GIT_URL="git@github.com:mincheolsung/intra-vm-isolation-with-sev-snp.git"
+KERNEL_HOST_BRANCH="host-support"
+KERNEL_GUEST_BRANCH="guest-support"
 
 # qemu commit
 QEMU_GIT_URL="https://github.com/AMDESE/qemu.git"

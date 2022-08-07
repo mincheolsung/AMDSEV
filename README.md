@@ -70,6 +70,12 @@ To launch the SNP guest use the launch-qemu.sh script provided in this repositor
 # ./launch-qemu.sh -hda <your_qcow2_file> -sev-snp
 ````
 
+If there is an error while launching the guest, try specifying kernel and initrd image
+
+````
+# ./launch-qemu.sh -hda <your_qcow2_file> -kernel <your_vmlinuz> -initrd <your_initrd> -sev-snp
+````
+
 To launch SNP disabled guest, simply remove the "-sev-snp" from the above command line.
 
 Once the guest is booted, run the following command inside the guest VM to verify that SNP is enabled:

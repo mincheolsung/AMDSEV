@@ -1,0 +1,9 @@
+build-essential
+ninja-build
+pkg-config
+libglib2.0-dev
+libpixman-1-dev
+flex
+bison
+libssl-dev
+libelf-dev

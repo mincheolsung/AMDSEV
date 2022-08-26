@@ -21,7 +21,7 @@ build_kernel()
 	if [ ! -d guest ]; then
 		run_cmd git clone ${KERNEL_GIT_URL} guest
 		pushd guest >/dev/null
-		run_cmd git remote add origin ${KERNEL_GIT_URL}
+		run_cmd git remote add current ${KERNEL_GIT_URL}
 		popd
 	fi
 
@@ -56,11 +56,11 @@ build_kernel()
 		$MAKE distclean
 
 		pushd ${V} >/dev/null
-			# If ${KERNEL_GIT_URL} is ever changed, 'origin' remote will be out
+			# If ${KERNEL_GIT_URL} is ever changed, 'current' remote will be out
 			# of date, so always update the remote URL first
-			run_cmd git remote set-url origin ${KERNEL_GIT_URL}
-			run_cmd git fetch origin
-			run_cmd git checkout origin/${BRANCH}
+			run_cmd git remote set-url current ${KERNEL_GIT_URL}
+			run_cmd git fetch current
+			run_cmd git checkout current/${BRANCH}
 			COMMIT=$(git log --format="%h" -1 HEAD)
 
 			run_cmd "cp /boot/config-$(uname -r) .config"

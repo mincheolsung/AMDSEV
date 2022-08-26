@@ -10,6 +10,40 @@ The following command builds the host and guest Linux kernel, qemu and ovmf bios
 # ./build.sh --package
 # sudo cp kvm.conf /etc/modprobe.d/
 ````
+
+If you get erros like below, check this: https://github.com/AMDESE/ovmf/issues/2
+
+````
+Building ... /home/mincheol/AMDSEV/ovmf/OvmfPkg/Library/NvVarsFileLib/NvVarsFileLib.inf [X64]
+
+
+build.py...
+ : error 7000: Failed to execute command
+	make tbuild [/home/mincheol/AMDSEV/ovmf/Build/OvmfX64/DEBUG_GCC5/X64/MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsicSev]
+
+
+build.py...
+ : error 7000: Failed to execute command
+	make tbuild [/home/mincheol/AMDSEV/ovmf/Build/OvmfX64/DEBUG_GCC5/X64/MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr]
+
+
+build.py...
+ : error 7000: Failed to execute command
+	make tbuild [/home/mincheol/AMDSEV/ovmf/Build/OvmfX64/DEBUG_GCC5/X64/MdePkg/Library/BaseLib/BaseLib]
+
+
+build.py...
+ : error F002: Failed to build module
+	/home/mincheol/AMDSEV/ovmf/MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsicSev.inf [X64, GCC5, DEBUG]
+
+- Failed -
+Build end time: 03:19:48, Aug.26 2022
+Build total time: 00:00:10
+
+ERROR: nice build -q --cmd-len=64436 -DDEBUG_ON_SERIAL_PORT=TRUE -n 32 -t GCC5 -a X64 -p OvmfPkg/OvmfPkgX64.dsc
+
+````
+
 On succesful build, the binaries will be available in `snp-release-<DATE>`.
 
 ## Prepare Host

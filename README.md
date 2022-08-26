@@ -13,6 +13,17 @@ The following command builds the host and guest Linux kernel, qemu and ovmf bios
 
 If you get erros like below, check this: https://github.com/AMDESE/ovmf/issues/2
 
+TL;NR
+Install iasl and nasm
+
+````
+sudo apt install iasl
+cd AMDSEV/dependencies/nasm-2.15.05
+./configure
+make
+make install
+````
+
 ````
 Building ... /home/mincheol/AMDSEV/ovmf/OvmfPkg/Library/NvVarsFileLib/NvVarsFileLib.inf [X64]
 

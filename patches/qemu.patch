@@ -1,0 +1,142 @@
+diff --git a/hmp-commands.hx b/hmp-commands.hx
+index cf723c69ac..4b6d85282c 100644
+--- a/hmp-commands.hx
++++ b/hmp-commands.hx
+@@ -1742,3 +1742,18 @@ ERST
+         .help       = "start a round of guest dirty rate measurement",
+         .cmd        = hmp_calc_dirty_rate,
+     },
++
++SRST
++  ``sev-prepare-switch``
++    Prepare swiching ASID.
++ERST
++
++#if defined(TARGET_I386)
++    {
++        .name       = "sev-prepare-switch",
++        .args_type  = "",
++        .params     = "",
++        .help       = "SEV prepare_switch",
++        .cmd        = hmp_sev_prepare_switch,
++    },
++#endif
+diff --git a/include/monitor/hmp-target.h b/include/monitor/hmp-target.h
+index dc53add7ee..3d178d69d7 100644
+--- a/include/monitor/hmp-target.h
++++ b/include/monitor/hmp-target.h
+@@ -50,5 +50,6 @@ void hmp_mce(Monitor *mon, const QDict *qdict);
+ void hmp_info_local_apic(Monitor *mon, const QDict *qdict);
+ void hmp_info_io_apic(Monitor *mon, const QDict *qdict);
+ void hmp_info_sgx(Monitor *mon, const QDict *qdict);
++void hmp_sev_prepare_switch(Monitor *mon, const QDict *qdict);
+ 
+ #endif /* MONITOR_HMP_TARGET_H */
+diff --git a/linux-headers/linux/kvm.h b/linux-headers/linux/kvm.h
+index 0fd698bf9b..579b3dc26d 100644
+--- a/linux-headers/linux/kvm.h
++++ b/linux-headers/linux/kvm.h
+@@ -1718,6 +1718,9 @@ enum sev_cmd_id {
+ 	KVM_SEV_SNP_LAUNCH_UPDATE,
+ 	KVM_SEV_SNP_LAUNCH_FINISH,
+ 
++	/* Intra-vm isolation */
++	KVM_SEV_PREPARE_SWITCH,
++
+ 	KVM_SEV_NR_MAX,
+ };
+ 
+diff --git a/target/i386/monitor.c b/target/i386/monitor.c
+index 3263161660..a56c5973db 100644
+--- a/target/i386/monitor.c
++++ b/target/i386/monitor.c
+@@ -689,6 +689,14 @@ SevInfo *qmp_query_sev(Error **errp)
+     return info;
+ }
+ 
++void hmp_sev_prepare_switch(Monitor *mon, const QDict *qdict)
++{
++    int ret = sev_prepare_switch();
++    if (ret) {
++        monitor_printf(mon, "sev_prepare_switch failed, ret: %d\n", ret);
++	}
++}
++
+ void hmp_info_sev(Monitor *mon, const QDict *qdict)
+ {
+     SevInfo *info = sev_get_info();
+diff --git a/target/i386/sev.c b/target/i386/sev.c
+index 3c296a59ae..9df0e230a9 100644
+--- a/target/i386/sev.c
++++ b/target/i386/sev.c
+@@ -962,6 +962,58 @@ sev_read_file_base64(const char *filename, guchar **data, gsize *len)
+     return 0;
+ }
+ 
++int
++sev_prepare_switch(void)
++{
++    int ret, error;
++    gsize sz;
++    guchar *pdh_cert = NULL, *plat_certs = NULL, *amd_certs = NULL;
++    SevCommonState *sev_common = SEV_COMMON(MACHINE(qdev_get_machine())->cgs);
++    struct kvm_sev_send_start *start = g_new0(struct kvm_sev_send_start, 1);
++
++    if (sev_read_file_base64("/home/mincheol/sev-tool/certs/pdh.base64", &pdh_cert, &sz) < 0) {
++        error_report("%s: fail to read pdh.cert", __func__);
++        ret = -1;
++        goto out3;
++    }
++    start->pdh_cert_uaddr = (unsigned long)pdh_cert;
++    start->pdh_cert_len = sz;
++
++    if (sev_read_file_base64("/home/mincheol/sev-tool/certs/cert_chain.base64", &plat_certs, &sz) < 0) {
++        error_report("%s: fail to read cert_chain.cert", __func__);
++        ret = -2;
++        goto out2;
++    }
++    start->plat_certs_uaddr = (unsigned long)plat_certs;
++    start->plat_certs_len = sz;
++
++    if (sev_read_file_base64("/home/mincheol/sev-tool/certs/ask_ark.base64", &amd_certs, &sz) < 0) {
++        error_report("%s: fail to read ask_ark.cert", __func__);
++        ret = -3;
++        goto out1;
++    }
++    start->amd_certs_uaddr = (unsigned long)amd_certs;
++    start->amd_certs_len = sz;
++
++    ret = sev_ioctl(sev_common->sev_fd, KVM_SEV_PREPARE_SWITCH, start, &error);
++    if (ret) {
++        error_report("%s: PREPARE_SWITCH ret=%d fw_error=%d '%s'",
++                     __func__, ret, error, fw_error_to_str(error));
++        exit(1);
++    }
++
++	error_report("%s, %u, %u, %u", __func__, start->pdh_cert_len,
++		start->plat_certs_len, start->amd_certs_len);
++out1:
++    g_free(amd_certs);
++out2:
++    g_free(plat_certs);
++out3:
++    g_free(pdh_cert);
++
++    return ret;
++}
++
+ static int
+ sev_snp_launch_start(SevSnpGuestState *sev_snp_guest)
+ {
+diff --git a/target/i386/sev_i386.h b/target/i386/sev_i386.h
+index fcf2b12908..a14b838a13 100644
+--- a/target/i386/sev_i386.h
++++ b/target/i386/sev_i386.h
+@@ -45,6 +45,7 @@ typedef struct SevKernelLoaderContext {
+ extern bool sev_es_enabled(void);
+ extern bool sev_snp_enabled(void);
+ extern uint64_t sev_get_me_mask(void);
++extern int sev_prepare_switch(void);
+ extern SevInfo *sev_get_info(void);
+ extern uint32_t sev_get_cbit_position(void);
+ extern uint32_t sev_get_reduced_phys_bits(void);

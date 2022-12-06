@@ -192,6 +192,8 @@ add_opts "-drive if=pflash,format=raw,unit=0,file=${UEFI_CODE},readonly"
 # add network support and fwd port 22 to 8000
 # echo "guest port 22 is fwd to host 8000..."
 #add_opts "-netdev user,id=vmnic,hostfwd=tcp::8000-:22 -device e1000,netdev=vmnic,romfile="
+#add_opts "-qmp tcp:localhost:4444,server"
+add_opts "-net nic -net tap,ifname=tap0,script=no"
 add_opts "-netdev user,id=vmnic"
 add_opts " -device virtio-net-pci,disable-legacy=on,iommu_platform=true,netdev=vmnic,romfile="
 
@@ -248,7 +250,8 @@ else
 fi
 
 # start monitor on pty and named socket 'monitor'
-add_opts "-monitor pty -monitor unix:monitor,server,nowait"
+#add_opts "-monitor pty -monitor unix:monitor,server,nowait"
+add_opts "-monitor telnet::55555,server,nowait -serial mon:stdio"
 
 # log the console  output in stdout.log
 QEMU_CONSOLE_LOG=`pwd`/stdout.log
